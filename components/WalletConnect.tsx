@@ -107,7 +107,7 @@ const WalletConnect = () => {
         Blast that ether!
       </h1>
 
-       <h2 className="text-2xl font-bold mb-6">Ethereum Wallet Connection</h2>
+      {!walletAddress &&  <h2 className="text-2xl font-bold mb-6">Ethereum Wallet Connection</h2>}
 
       {walletAddress ? (
         <div className="w-full max-w-md bg-black shadow-lg rounded-lg p-6 text-center">
