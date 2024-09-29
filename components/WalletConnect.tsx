@@ -14,15 +14,15 @@ const WalletConnect = () => {
     // Contract details
     const contractAddress = "0x60c3e6283541888415CF2366434a45d9bA00e095";
     const contractABI = contractAbi;
+    let provider;
+    let signer: ethers.JsonRpcSigner | ethers.ContractRunner | null | undefined = null;
 
     const connectWallet = async () => {
-        let provider;
-        let signer = null;
         //@ts-expect-error
         if(typeof window.ethereum !== "undefined") {
             try {
                 // Request wallet connection
-        //@ts-expect-error
+                //@ts-expect-error
                 const accounts = await window.ethereum.request({method: "eth_requestAccounts"});
                 const account =  accounts[0];
                 setWalletAddress(account);
@@ -53,7 +53,30 @@ const WalletConnect = () => {
         }
     }
 
-    const transferEther = async () => {
+    const transferEtherFromConnectedWallet = async () => {
+        if(!recipientAddress || !amountToSend){
+            setStatus("Please provide a recipient and an amount.");
+            return;
+        }
+
+        try {
+            if(signer?.sendTransaction){
+                    const tx = await signer.sendTransaction({
+                        to: recipientAddress,
+                        value: ethers.parseEther(amountToSend),
+                    });
+
+                    await tx.wait();
+
+                    setStatus("Transfer completed");
+            }
+        } catch (e:any) {
+            console.error("Failed to transfer Ether", e);
+            setStatus("Failed to transfer Ether");
+        }
+    }
+
+    const transferEtherFromContract = async () => {
         if(!contract){
             setStatus("Contract is not initialized");
             return;
@@ -61,8 +84,6 @@ const WalletConnect = () => {
 
         try {
                 const amountInWei = ethers.parseEther(amountToSend);
-
-                console.log(contract)
 
                 const tx = await contract.transferEther(recipientAddress, amountInWei);
                 await tx.wait();
@@ -103,7 +124,8 @@ const WalletConnect = () => {
 
                     <input type="text" placeholder="Amount in Ether" value={amountToSend} onChange={(e)=> setAmountToSend(e.target.value)}/>
 
-                    <button onClick={transferEther}>Send Ether</button>
+                    <button onClick={transferEtherFromContract}>Send Ether From Contract</button>
+                    <button onClick={transferEtherFromConnectedWallet}>Send Ether From Wallet</button>
                 </div>
             )}
 
